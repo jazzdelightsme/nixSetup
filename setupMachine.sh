@@ -81,7 +81,9 @@ if [ ! -d ./nixSetup ]; then
 	echo ""
 	echo "Cloning personal stuff"
 	echo ""
-	git clone https://github.com/jazzdelightsme/nixSetup.git
+	# sudo back to the calling user so that you won't have to use sudo to do things
+	# like "git pull" in this dir:
+	sudo -u $SUDO_USER git clone https://github.com/jazzdelightsme/nixSetup.git
 	cd ./nixSetup
 	pwsh -ExecutionPolicy Bypass ./moreSetup.ps1
 else
@@ -91,7 +93,7 @@ else
 	echo ""
 	echo "   cd ~/nixSetup"
 	echo "   git pull"
-	echo "   pwsh -ExecutionPolicy Bypass ./moreSetup.ps1"
+	echo "   sudo pwsh -ExecutionPolicy Bypass ./moreSetup.ps1"
 	echo ""
 fi
 
