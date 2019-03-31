@@ -11,8 +11,6 @@ pushd ~ > /dev/null
 
 apt-get update
 
-#apt-get install -y lsb-release wget curl git vim vim-gtk3
-
 if [ -f "$(which lsb_release)" ]; then
 	lsb_release -a
 else
@@ -71,10 +69,17 @@ else
 	echo ""
 	echo "Installing pwsh"
 	echo ""
-	wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
-	dpkg -i packages-microsoft-prod.deb
-	apt-get update
-	apt-get install -y powershell
+	#wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
+	#dpkg -i packages-microsoft-prod.deb
+	#apt-get update
+	#apt-get install -y powershell
+
+    # This way should be a little more version-independent, and also includes the VS Code
+    # IDE.
+    # I can't seem to get this way to work:
+    #bash <(wget -O - https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/install-powershell.sh) -includeide
+    # But this does:
+    wget -O - https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/install-powershell.sh | bash -s includeide
 fi
 
 if [ ! -d ./nixSetup ]; then
