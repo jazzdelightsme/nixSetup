@@ -62,8 +62,26 @@ try
 
             if( (Test-Path $dst) )
             {
-                Write-Host "Already exists: $dst" -Fore DarkCyan
-                Write-Host "   To compare: bcompare $src $dst" -Fore DarkYellow
+                if( (Test-Path $dst -PathType Container) )
+                {
+                    $diff = diff -r $src $dst
+                }
+                else
+                {
+                    $diff = cmp $src $dst
+                }
+
+                if( $diff )
+                {
+                    Write-Host "(diff) " -Fore Yello -NoNewline
+                    Write-host "Already exists: $dst" -Fore DarkCyan
+                    Write-Host "   To compare: bcompare $src $dst" -Fore DarkYellow
+                }
+                else
+                {
+                    Write-Host "(same) " -Fore DarkGreen -NoNewline
+                    Write-host "Already exists: $dst" -Fore DarkCyan
+                }
                 continue
             }
 
