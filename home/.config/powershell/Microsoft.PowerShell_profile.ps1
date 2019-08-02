@@ -29,7 +29,8 @@ if( ($PSVersionTable.PSEdition -eq 'Core') -and ($PSVersionTable.Platform -eq 'W
 }
 #>
 
-$env:GIT_EDITOR='gvim'
+# The --nofork is so that git will wait for the GUI.
+$env:GIT_EDITOR='gvim --nofork'
 
 
 # Avoid errors with Invoke-WebRequest:
