@@ -42,6 +42,8 @@ try
                [string] $ScriptRoot
              )
 
+        Set-StrictMode -Version Latest
+
         # TODO: maybe we should make these files links, so we can easily commit any
         # changes to them?
 
@@ -198,6 +200,8 @@ try
                    [string] $ScriptRoot
                  )
 
+            Set-StrictMode -Version Latest
+
             # I cannot for the life of me figure out why "sh -c $script" does not work,
             # but "$script | sh" does (when called from pwsh; it works fine in bash).
             $script = curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh
@@ -236,6 +240,8 @@ try
             param( [Parameter( Mandatory = $true, Position = 0 )]
                    [string] $ScriptRoot
                  )
+
+            Set-StrictMode -Version Latest
 
             # We probably need to load up the environment variables.
             $shEnvVars = /home/linuxbrew/.linuxbrew/bin/brew shellenv
