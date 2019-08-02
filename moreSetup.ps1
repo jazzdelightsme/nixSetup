@@ -206,7 +206,6 @@ try
             # but "$script | sh" does (when called from pwsh; it works fine in bash).
             $script = curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh
             $script | sh
-            write-host "pretending it succeeded" -fore magenta -back darkgreen
             if( !$? )
             {
                 Write-Error "Uh-oh; did the brew install shell script fail?"
