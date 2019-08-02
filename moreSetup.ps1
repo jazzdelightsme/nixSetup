@@ -233,17 +233,25 @@ try
                 return
             }
 
-            Write-Host 'Updating brew... (this can take a while)' -Fore Cyan
-            brew update
+            if( !(which git-credential-manager) )
+            {
+                Write-Host "Installing git-credential-manager" -Fore Cyan
 
-            Write-Host '[brew] installing git-credential-manager' -Fore Cyan
-            brew install git-credential-manager
 
-            git-credential-manager install
+                Write-Host 'Updating brew... (this can take a while)' -Fore Cyan
+                brew update
 
+                Write-Host '[brew] installing git-credential-manager' -Fore Cyan
+                brew install git-credential-manager
+
+                git-credential-manager install
+            }
+            else
+            {
+                Write-Host '(already have git-credential-manager)' -Fore DarkCyan
+            }
         } -args $ScriptRoot
     }
-
 
     Write-Host "Done." -Fore Green
 }
