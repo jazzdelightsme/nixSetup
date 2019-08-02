@@ -90,7 +90,10 @@ if [ ! -d ./nixSetup ]; then
 	# like "git pull" in this dir:
 	sudo -u $SUDO_USER git clone https://github.com/jazzdelightsme/nixSetup.git
 	cd ./nixSetup
-	pwsh -ExecutionPolicy Bypass ./moreSetup.ps1
+	pwsh -ExecutionPolicy Bypass -NoProfile ./moreSetup.ps1
+
+    # Reload profile in case env. vars were added.
+    . ~/.profile
 else
 	echo ""
 	echo "The nixSetup directory already exists. If you want to re-run the setup,"
@@ -98,7 +101,8 @@ else
 	echo ""
 	echo "   cd ~/nixSetup"
 	echo "   git pull"
-	echo "   sudo pwsh -ExecutionPolicy Bypass ./moreSetup.ps1"
+	echo "   sudo pwsh -ExecutionPolicy Bypass -NoProfile ./moreSetup.ps1"
+	echo "   . ~/.profile"
 	echo ""
 fi
 

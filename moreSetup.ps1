@@ -3,6 +3,7 @@ param()
 
 try
 {
+    Set-StrictMode -Version Latest
     pushd ~
 
     if( 0 -ne (id -u) )
@@ -13,7 +14,7 @@ try
 
         return
     }
-    elseif( !$ScriptRoot )
+    elseif( !(Test-Path Variable:\ScriptRoot) )
     {
         $ScriptRoot = $PSScriptRoot
     }
@@ -50,6 +51,8 @@ try
                     '.gitconfig'
                     '.inputrc'
                     '.Xresources'
+                    '.profile'
+                    '.bashrc'
                   )
 
         foreach( $thing in $stuff )
@@ -60,6 +63,7 @@ try
             if( (Test-Path $dst) )
             {
                 Write-Host "Already exists: $dst" -Fore DarkCyan
+                Write-Host "   To compare: bcompare $src $dst" -Fore DarkYellow
                 continue
             }
 
@@ -136,6 +140,108 @@ try
     else
     {
         Write-Host '(already have hack font)' -Fore DarkCyan
+    }
+
+    if( !(which java) )
+    {
+        Write-Host "Installing java" -Fore Cyan
+        apt-get install -y --show-progress default-jre
+    }
+    else
+    {
+        Write-Host '(already have java)' -Fore DarkCyan
+    }
+
+    # I don't really need ruby, but brew does, and their script installer does not seem to
+    # be able to install it.
+    if( !(which ruby) )
+    {
+        Write-Host "Installing ruby" -Fore Cyan
+        apt-get install -y --show-progress ruby
+    }
+    else
+    {
+        Write-Host '(already have ruby)' -Fore DarkCyan
+    }
+
+    # Can't just run "which brew" to detect brew, because root does not have it in the
+    # PATH (By Design).
+    if( !(Test-Path /home/linuxbrew/.linuxbrew/bin/brew) )
+    {
+        Write-Host "Installing brew" -Fore Cyan
+
+        # some pre-reqs
+        apt-get install -y --show-progress build-essential file
+
+        sudo -u $env:SUDO_USER pwsh -ExecutionPolicy Bypass -NoProfile -Command {
+
+            [CmdletBinding()]
+            param( [Parameter( Mandatory = $true, Position = 0 )]
+                   [string] $ScriptRoot
+                 )
+
+            # I cannot for the life of me figure out why "sh -c $script" does not work,
+            # but "$script | sh" does (when called from pwsh; it works fine in bash).
+            $script = curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh
+            $script | sh
+            write-host "pretending it succeeded" -fore magenta -back darkgreen
+            if( !$? )
+            {
+                Write-Error "Uh-oh; did the brew install shell script fail?"
+            }
+            else
+            {
+                $shEnvVars = /home/linuxbrew/.linuxbrew/bin/brew shellenv
+
+                # nevermind about the following line; I put this stuff, pre-canned into .profile
+                #$shEnvVars >> ~/.profile
+
+                # let's get the env vars locally, too
+                $shEnvVars.Replace( "export ", "`$env:" ).
+                           Replace( "`$PATH", "`$env:PATH" ).
+                           Replace( "`$MANPATH", "`$env:MANPATH" ).
+                           Replace( "`$INFOPATH", "`$env:INFOPATH" ) | Invoke-Expression
+            }
+        } -args $ScriptRoot
+    }
+    else
+    {
+        Write-Host '(already have brew)' -Fore DarkCyan
+    }
+
+    # Brew-installed stuff.
+    if( (Test-Path /home/linuxbrew/.linuxbrew/bin/brew) )
+    {
+        sudo -u $env:SUDO_USER pwsh -ExecutionPolicy Bypass -NoProfile -Command {
+
+            [CmdletBinding()]
+            param( [Parameter( Mandatory = $true, Position = 0 )]
+                   [string] $ScriptRoot
+                 )
+
+            # We probably need to load up the environment variables.
+            $shEnvVars = /home/linuxbrew/.linuxbrew/bin/brew shellenv
+
+            $shEnvVars.Replace( "export ", "`$env:" ).
+                       Replace( "`$PATH", "`$env:PATH" ).
+                       Replace( "`$MANPATH", "`$env:MANPATH" ).
+                       Replace( "`$INFOPATH", "`$env:INFOPATH" ) | Invoke-Expression
+
+            if( !(which brew) )
+            {
+                Write-Error "Misconfiguration? Where's Brew?"
+                return
+            }
+
+            Write-Host 'Updating brew... (this can take a while)' -Fore Cyan
+            brew update
+
+            Write-Host '[brew] installing git-credential-manager' -Fore Cyan
+            brew install git-credential-manager
+
+            git-credential-manager install
+
+        } -args $ScriptRoot
     }
 
 

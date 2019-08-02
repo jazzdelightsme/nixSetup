@@ -156,6 +156,15 @@ if( (Test-Path $razProfile) )
     . $razProfile
 }
 
+if( (Test-Path "/home/linuxbrew/.linuxbrew") )
+{
+    $env:HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
+    $env:HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar"
+    $env:HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew"
+    $env:PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$env:PATH"
+    $env:MANPATH="/home/linuxbrew/.linuxbrew/share/man:$env:MANPATH"
+    $env:INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$env:INFOPATH"
+}
 
 function beep()
 {
