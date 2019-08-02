@@ -1,6 +1,3 @@
-[credential]
-	helper = !/usr/lib/jvm/java-11-openjdk-amd64/bin/java -Ddebug=false -Djava.net.useSystemProxies=true -jar /home/dt29/bin/git-credential-manager/git-credential-manager-2.0.4.jar
-	#canFallBackToInsecureStore = true
 [user]
 	email = danthom@microsoft.com
 	name = Dan Thompson (SBS)
