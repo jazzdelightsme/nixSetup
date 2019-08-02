@@ -77,7 +77,7 @@ try
                 {
                     Write-Host "(diff) " -Fore Yello -NoNewline
                     Write-host "Already exists: $dst" -Fore DarkCyan
-                    Write-Host "   To compare: bcompare $src $dst" -Fore DarkYellow
+                    Write-Host "   To compare: bcompare $src ~/$dst" -Fore DarkYellow
                 }
                 else
                 {
