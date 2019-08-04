@@ -31,6 +31,100 @@ try
 
     Write-Host "Continuing setup..." -Fore Cyan
 
+    $tmpFile = '/tmp/nixSetup_filesThatAreDifferent'
+
+    # Let's create these files as the normal user.
+    #
+    # Unfortunately when we use a ScriptBlock as a parameter to pwsh like this, we lose
+    # $PSScriptRoot, so we'll have to pass that in.
+    #
+    # We also pass in the $tmpFile path that we use to remember any pre-existing,
+    # conflicting files, so that we can show them again at the end, after all the other
+    # spew.
+    sudo -u $env:SUDO_USER pwsh -ExecutionPolicy Bypass -NoProfile -Command {
+
+        [CmdletBinding()]
+        param( [Parameter( Mandatory = $true, Position = 0 )]
+               [string] $ScriptRoot,
+
+               [Parameter( Mandatory = $true, Position = 1 )]
+               [string] $tmpFile
+             )
+
+        Set-StrictMode -Version Latest
+
+        Remove-Item -LiteralPath $tmpFile -Force -ErrorAction Ignore
+
+        # TODO: maybe we should make these files links, so we can easily commit any
+        # changes to them?
+
+        $stuff = @( '.vimrc'
+                    '.gvimrc'
+                    '.config/powershell'
+                    '.gitconfig'
+                    '.inputrc'
+                    '.Xresources'
+                    '.profile'
+                    '.bashrc'
+                  )
+
+        foreach( $thing in $stuff )
+        {
+            $src = Join-Path $ScriptRoot 'home' $thing
+            $dst = $thing
+
+            if( (Test-Path $dst) )
+            {
+                if( (Test-Path $dst -PathType Container) )
+                {
+                    $diff = diff -r $src $dst
+                }
+                else
+                {
+                    $diff = cmp $src $dst
+                }
+
+                if( $diff )
+                {
+                    Write-Host "(diff) " -Fore Yello -NoNewline
+                    Write-host "Already exists: $dst" -Fore DarkCyan
+                    Write-Host "   To compare: bcompare $src ~/$dst" -Fore DarkYellow
+
+                    "$src ~/$dst" >> $tmpFile
+                }
+                else
+                {
+                    Write-Host "(same) " -Fore DarkGreen -NoNewline
+                    Write-host "Already exists: $dst" -Fore DarkCyan
+                }
+                continue
+            }
+
+            Write-Host "Copying $thing ..." -Fore Cyan
+
+            if( (Test-Path $src -Type Container) )
+            {
+                $dst = Split-Path $dst
+                Copy-Item $src $dst -Recurse
+            }
+            else
+            {
+                Copy-Item $src $dst
+            }
+        }
+
+
+        $vimPs1Path = './.vim/pack/vim-ps1/start/vim-ps1'
+
+        if( !(Test-Path $vimPs1Path) )
+        {
+            Write-Host 'Cloning vim-ps1 (vim PowerShell stuff)' -Fore Cyan
+            $vimPs1Url = 'https://github.com/PProvost/vim-ps1.git'
+            git clone $vimPs1Url $vimPs1Path
+        }
+
+    } -args @( $ScriptRoot, $tmpFile )
+
     if( !(which git-cola) )
     {
         Write-Host "Installing git-cola..." -Fore cyan
@@ -198,87 +292,20 @@ try
         } -args $ScriptRoot
     }
 
-    # Let's create these files as the normal user. We'll do this last so that the user can
-    # see any conflicts with existing files and get them fixed up.
-    #
-    # Unfortunately when we use a ScriptBlock as a parameter to pwsh like this, we lose
-    # $PSScriptRoot, so we'll have to pass that in.
-    sudo -u $env:SUDO_USER pwsh -ExecutionPolicy Bypass -NoProfile -Command {
-
-        [CmdletBinding()]
-        param( [Parameter( Mandatory = $true, Position = 0 )]
-               [string] $ScriptRoot
-             )
-
-        Set-StrictMode -Version Latest
-
-        # TODO: maybe we should make these files links, so we can easily commit any
-        # changes to them?
-
-        $stuff = @( '.vimrc'
-                    '.gvimrc'
-                    '.config/powershell'
-                    '.gitconfig'
-                    '.inputrc'
-                    '.Xresources'
-                    '.profile'
-                    '.bashrc'
-                  )
-
-        foreach( $thing in $stuff )
+    if( (Test-Path $tmpFile) )
+    {
+        Write-Host ''
+        Write-Host "There were some existing files that are different from those included with this script:" -Fore Yellow
+        foreach( $line in (Get-Content $tmpFile) )
         {
-            $src = Join-Path $ScriptRoot 'home' $thing
-            $dst = $thing
-
-            if( (Test-Path $dst) )
-            {
-                if( (Test-Path $dst -PathType Container) )
-                {
-                    $diff = diff -r $src $dst
-                }
-                else
-                {
-                    $diff = cmp $src $dst
-                }
-
-                if( $diff )
-                {
-                    Write-Host "(diff) " -Fore Yello -NoNewline
-                    Write-host "Already exists: $dst" -Fore DarkCyan
-                    Write-Host "   To compare: bcompare $src ~/$dst" -Fore DarkYellow
-                }
-                else
-                {
-                    Write-Host "(same) " -Fore DarkGreen -NoNewline
-                    Write-host "Already exists: $dst" -Fore DarkCyan
-                }
-                continue
-            }
-
-            Write-Host "Copying $thing ..." -Fore Cyan
-
-            if( (Test-Path $src -Type Container) )
-            {
-                $dst = Split-Path $dst
-                Copy-Item $src $dst -Recurse
-            }
-            else
-            {
-                Copy-Item $src $dst
-            }
+            $src, $dst = $line.Split()
+            Write-Host "(diff) " -Fore Yellow -NoNewline
+            Write-host "Already exists: $dst" -Fore DarkCyan
+            Write-Host "   To compare: bcompare $src $dst" -Fore DarkYellow
         }
 
-
-        $vimPs1Path = './.vim/pack/vim-ps1/start/vim-ps1'
-
-        if( !(Test-Path $vimPs1Path) )
-        {
-            Write-Host 'Cloning vim-ps1 (vim PowerShell stuff)' -Fore Cyan
-            $vimPs1Url = 'https://github.com/PProvost/vim-ps1.git'
-            git clone $vimPs1Url $vimPs1Path
-        }
-
-    } -args $ScriptRoot
+        Remove-Item $tmpFile -Force -ErrorAction Ignore
+    }
 
     Write-Host "Done." -Fore Green
 }
