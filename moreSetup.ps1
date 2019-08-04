@@ -31,6 +31,10 @@ try
 
     Write-Host "Continuing setup..." -Fore Cyan
 
+    # Fix up permissions, since we've first run pwsh as root:
+    chown -R --reference=~/.local/share/nautilus ~/.local/share/powershell
+
+
     $tmpFile = '/tmp/nixSetup_filesThatAreDifferent'
 
     # Let's create these files as the normal user.
@@ -65,8 +69,8 @@ try
                     @( '.gitconfig'         , '' ) ,
                     @( '.inputrc'           , '' ) ,
                     @( '.Xresources'        , '' ) ,
-                    @( '.profile'           , '74BC92BCF960BFB62B22AA65370CDD1CD37739BAA4EAB9B240D72692C898EF1F' ) ,
-                    @( '.bashrc'            , '34FBC467B8C624D92ABCDF3EDCF35EE46032618A6F23B210EFAB0E6824978126' )
+                    @( '.profile'           , '28B4A453B68DDE64F814E94BAB14EE651F4F162E15DD9920490AA1D49F05D2A4' ) ,
+                    @( '.bashrc'            , '342099DA4DD28C394D3F8782D90D7465CB2EAA611193F8F378D6918261CB9BB8' )
                   ) | ForEach-Object { [PSCustomObject] @{ FileName             = $PSItem[ 0 ]
                                                            KnownDefaultFileHash = $PSItem[ 1 ] } }
 
