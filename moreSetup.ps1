@@ -32,7 +32,10 @@ try
     Write-Host "Continuing setup..." -Fore Cyan
 
     # Fix up permissions, since we've first run pwsh as root:
-    chown -R --reference=~/.local/share/nautilus ~/.local/share/powershell
+    # (irritating that chown can't handle ~)
+    $refDir = Resolve-Path '~/.local/share/nautilus'
+    $dstDir = Resolve-Path '~/.local/share/powershell'
+    chown -R --reference=$refDir $dstDir
 
 
     $tmpFile = '/tmp/nixSetup_filesThatAreDifferent'
