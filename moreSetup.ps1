@@ -58,20 +58,22 @@ try
         # TODO: maybe we should make these files links, so we can easily commit any
         # changes to them?
 
-        $stuff = @( '.vimrc'
-                    '.gvimrc'
-                    '.config/powershell'
-                    '.gitconfig'
-                    '.inputrc'
-                    '.Xresources'
-                    '.profile'
-                    '.bashrc'
-                  )
+        #              FileName               KnownDefaultFileHash
+        $stuff = @( @( '.vimrc'             , '' ) ,
+                    @( '.gvimrc'            , '' ) ,
+                    @( '.config/powershell' , '' ) ,
+                    @( '.gitconfig'         , '' ) ,
+                    @( '.inputrc'           , '' ) ,
+                    @( '.Xresources'        , '' ) ,
+                    @( '.profile'           , '74BC92BCF960BFB62B22AA65370CDD1CD37739BAA4EAB9B240D72692C898EF1F' ) ,
+                    @( '.bashrc'            , '34FBC467B8C624D92ABCDF3EDCF35EE46032618A6F23B210EFAB0E6824978126' )
+                  ) | ForEach-Object { [PSCustomObject] @{ FileName             = $PSItem[ 0 ]
+                                                           KnownDefaultFileHash = $PSItem[ 1 ] } }
 
         foreach( $thing in $stuff )
         {
-            $src = Join-Path $ScriptRoot 'home' $thing
-            $dst = $thing
+            $src = Join-Path $ScriptRoot 'home' $thing.FileName
+            $dst = $thing.FileName
 
             if( (Test-Path $dst) )
             {
@@ -86,21 +88,35 @@ try
 
                 if( $diff )
                 {
-                    Write-Host "(diff) " -Fore Yello -NoNewline
-                    Write-host "Already exists: $dst" -Fore DarkCyan
-                    Write-Host "   To compare: bcompare $src ~/$dst" -Fore DarkYellow
+                    # If the file is just the default file, let's just overwrite it.
 
-                    "$src ~/$dst" >> $tmpFile
+                    if( $thing.KnownDefaultFileHash -and
+                        ((Get-FileHash -Algorithm SHA256 -LiteralPath $dst).Hash -eq $thing.KnownDefaultFileHash) )
+                    {
+                        Write-Host "(overwriting existing-but-default file: $dst)" -Fore DarkYellow
+                    }
+                    else
+                    {
+                        Write-Host "(diff) " -Fore Yello -NoNewline
+                        Write-host "Already exists: $dst" -Fore DarkCyan
+                        Write-Host "   To compare: bcompare $src ~/$dst" -Fore DarkYellow
+
+                        # Remember this for later, so that we can show the user at the
+                        # very end, /after/ all the spew from other commands.
+                        "$src ~/$dst" >> $tmpFile
+
+                        continue
+                    }
                 }
                 else
                 {
                     Write-Host "(same) " -Fore DarkGreen -NoNewline
                     Write-host "Already exists: $dst" -Fore DarkCyan
+                    continue # no need to copy
                 }
-                continue
             }
 
-            Write-Host "Copying $thing ..." -Fore Cyan
+            Write-Host "Copying $($thing.FileName) ..." -Fore Cyan
 
             if( (Test-Path $src -Type Container) )
             {
