@@ -82,6 +82,9 @@ else
     wget -O - https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/install-powershell.sh | bash -s includeide
 fi
 
+# Tweak double-click word boundaries in terminal:
+dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/word-char-exceptions '@ms "-#%&+,./:=?@_~"'
+
 if [ ! -d ./nixSetup ]; then
 	echo ""
 	echo "Cloning personal stuff"
