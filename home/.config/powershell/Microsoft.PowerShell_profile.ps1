@@ -205,10 +205,6 @@ function gvim( $path )
 
 function gvl( [string] $stuff )
 {
-    if( ($PSVersionTable.PSEdition -eq 'Core') -and ($PSVersionTable.Platform -ne 'Win32NT') )
-    {
-        throw "tbd"
-    }
     #
     # Sometimes error messages use parentheses, so we want to be able to handle stuff
     # like:
@@ -235,14 +231,22 @@ function gvl( [string] $stuff )
     }
 
     # like /mnt/m/src/WucEffectsStaging/headers/public/amd64chk/internal/sdk/inc/ucrt/vcruntime.h:83:1:
-    if( $stuff -and $stuff.StartsWith( '/mnt/' ) )
+    if( $IsWindows -and ($stuff -and $stuff.StartsWith( '/mnt/' )) )
     {
         $stuff = ($stuff[ 5 ] + ":" + $stuff.Substring( '/mnt/X'.Length )).Replace( '/', '\' )
     }
 
     if( $stuff )
     {
-        C:\Tools\GvimLauncher.exe $stuff
+        if( $IsWindows )
+        {
+            C:\Tools\GvimLauncher.exe $stuff
+        }
+        else
+        {
+            $file, $line, $extra = $stuff.Split( ':' )
+            gvim $file +$line
+        }
     }
     else
     {
@@ -492,6 +496,14 @@ function Find-InSource
 }
 Set-Alias fs Find-InSource
 
+
+function Find-File( [string] $Pattern )
+{
+    Get-ChildItem -Recurse | where Fullname -match $Pattern | select -ExpandProperty FullName
+}
+Set-Alias ff Find-File
+
+
 if( ($PSVersionTable.PSEdition -ne 'Core') -or ($PSVersionTable.Platform -eq 'Win32NT') )
 {
     function GLOBAL:mklink
@@ -526,12 +538,6 @@ if( ($PSVersionTable.PSEdition -ne 'Core') -or ($PSVersionTable.Platform -eq 'Wi
     }
     Set-Alias fsr Find-InSourceRegex
 
-
-    function Find-File( [string] $Pattern )
-    {
-        Get-ChildItem -Recurse | where Fullname -match $Pattern | select -ExpandProperty FullName
-    }
-    Set-Alias ff Find-File
 
     function bc3
     {
