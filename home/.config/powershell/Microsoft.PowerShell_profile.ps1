@@ -1077,7 +1077,7 @@ function glo
     {
         try
         {
-            git log --oneline -n $NumberOfChanges
+            git log --show-linear-break --oneline -n $NumberOfChanges
         }
         finally { }
     }
