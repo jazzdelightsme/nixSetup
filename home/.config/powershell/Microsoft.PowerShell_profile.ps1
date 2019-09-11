@@ -73,6 +73,11 @@ else
     Set-PSReadlineOption -HistorySavePath $Home\Documents\WindowsPowerShell\ps_history
 }
 
+if( !(Test-Path Variable:\IsWindows) )
+{
+    $global:IsWindows = $true
+}
+
 # N.B. The "Shift" in the chord does not seem to work anymore... but specifying
 # a capital 'V' (instead of lowercase 'v') is what actually gets me what I
 # want. C.f. https://github.com/lzybkr/PSReadLine/issues/755
@@ -469,6 +474,24 @@ function Count
 function q { exit }
 
 
+function Find-InSource
+{
+    if( $IsWindows )
+    {
+        findstr /spinc:"$args" *.c *.cs *.cxx *.cpp *.h *.hxx *.hpp *.idl *.wxs *.wix *.wxi *.ps1 *.psm1 *.psd1 *.psfmt *.inl *.w *.md *.pm *.pl
+    }
+    elseif( (Get-Command rg -ErrorAction Ignore) )
+    {
+        # I don't think I need to bother with specifying file types.
+        rg -i --no-heading $args
+    }
+    else
+    {
+        throw "tbd; how about grep?"
+    }
+}
+Set-Alias fs Find-InSource
+
 if( ($PSVersionTable.PSEdition -ne 'Core') -or ($PSVersionTable.Platform -eq 'Win32NT') )
 {
     function GLOBAL:mklink
@@ -489,12 +512,6 @@ if( ($PSVersionTable.PSEdition -ne 'Core') -or ($PSVersionTable.Platform -eq 'Wi
         & cmd.exe /c rmdir $args
     }
 
-
-    function Find-InSource
-    {
-        findstr /spinc:"$args" *.c *.cs *.cxx *.cpp *.h *.hxx *.hpp *.idl *.wxs *.wix *.wxi *.ps1 *.psm1 *.psd1 *.psfmt *.inl *.w *.md *.pm *.pl
-    }
-    Set-Alias fs Find-InSource
 
     function Find-InWhatever
     {
