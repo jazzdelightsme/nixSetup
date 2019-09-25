@@ -7,6 +7,26 @@ if [[ $UID -ne 0 ]]; then
 	exit $?
 fi
 
+
+NOGUI=""
+while [ ! -z "$1" ]; do
+    case "$1" in
+        -nogui|-n)
+            shift
+            echo "(no GUI requested)"
+            NOGUI="-NoGUI"
+            ;;
+    esac
+    shift
+done
+
+if [ "$NOGUI" == "" ]; then
+    if [ ! -f "$(which dconf)" ]; then
+        echo "(dconf does not exist, so I'm going to assume you want -nogui)"
+        NOGUI="-NoGUI"
+    fi
+fi
+
 pushd ~ > /dev/null
 
 apt-get update
@@ -54,13 +74,15 @@ else
 	apt-get install -y vim
 fi
 
-if [ -f "$(which gvim)" ]; then
-	echo "(gvim already installed)"
-else
-	echo ""
-	echo "Installing gvim"
-	echo ""
-	apt-get install -y vim-gtk3
+if [ "$NOGUI" == "" ]; then
+    if [ -f "$(which gvim)" ]; then
+        echo "(gvim already installed)"
+    else
+        echo ""
+        echo "Installing gvim"
+        echo ""
+        apt-get install -y vim-gtk3
+    fi
 fi
 
 if [ -f "$(which pwsh)" ]; then
@@ -79,11 +101,16 @@ else
     # I can't seem to get this way to work:
     #bash <(wget -O - https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/install-powershell.sh) -includeide
     # But this does:
-    wget -O - https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/install-powershell.sh | bash -s includeide
+    if [ $NOGUI == "" ]; then
+        INCLUDE_IDE_ARG="includeide"
+    fi
+    wget -O - https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/install-powershell.sh | bash -s $INCLUDE_IDE_ARG
 fi
 
-# Tweak double-click word boundaries in terminal:
-dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/word-char-exceptions '@ms "-#%&+,./:=?@_~"'
+if [ -f "$(which dconf)" ]; then
+    # Tweak double-click word boundaries in terminal:
+    dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/word-char-exceptions '@ms "-#%&+,./:=?@_~"'
+fi
 
 if [ ! -d ./nixSetup ]; then
 	echo ""
@@ -93,7 +120,7 @@ if [ ! -d ./nixSetup ]; then
 	# like "git pull" in this dir:
 	sudo -u $SUDO_USER git clone https://github.com/jazzdelightsme/nixSetup.git
 	cd ./nixSetup
-	pwsh -ExecutionPolicy Bypass -NoProfile ./moreSetup.ps1
+	pwsh -ExecutionPolicy Bypass -NoProfile ./moreSetup.ps1 $NOGUI
 
     # Reload profile in case env. vars were added.
     . ~/.profile

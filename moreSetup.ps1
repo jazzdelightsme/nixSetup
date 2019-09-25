@@ -1,10 +1,14 @@
 [CmdletBinding()]
-param()
+param( [Parameter( Mandatory = $false )]
+       [switch] $NoGUI
+     )
 
 try
 {
     Set-StrictMode -Version Latest
     pushd ~
+
+    Write-Host "NoGUI? $NoGUI" -Fore Yellow
 
     if( 0 -ne (id -u) )
     {
@@ -33,7 +37,7 @@ try
 
     # Fix up permissions, since we've first run pwsh as root:
     # (irritating that chown can't handle ~)
-    $refDir = Resolve-Path '~/.local/share/nautilus'
+    $refDir = Resolve-Path '~'
     $dstDir = Resolve-Path '~/.local/share/powershell'
     chown -R --reference=$refDir $dstDir
 
@@ -148,7 +152,7 @@ try
 
     } -args @( $ScriptRoot, $tmpFile )
 
-    if( !(which git-cola) )
+    if( !$NoGUI -and !(which git-cola) )
     {
         Write-Host "Installing git-cola..." -Fore cyan
 
@@ -164,7 +168,7 @@ try
         Write-Host '(already have git-cola)' -Fore DarkCyan
     }
 
-    if( !(which bcompare) )
+    if( !$NoGUI -and !(which bcompare) )
     {
         Write-Host "Installing Beyond Compare..." -Fore Cyan
 
@@ -177,7 +181,7 @@ try
         Write-Host '(already have bcompare)' -Fore DarkCyan
     }
 
-    if( !(which gitk) )
+    if( !$NoGUI -and !(which gitk) )
     {
         Write-Host "Installing gitk" -Fore Cyan
         apt-get install -y --show-progress gitk
@@ -187,7 +191,7 @@ try
         Write-Host '(already have gitk)' -Fore DarkCyan
     }
 
-    if( !(fc-list | grep '/hack/') )
+    if( !$NoGUI -and !(fc-list | grep '/hack/') )
     {
         Write-Host "Installing Hack font" -Fore Cyan
         apt-get install -y fonts-hack-ttf
@@ -217,6 +221,17 @@ try
     else
     {
         Write-Host '(already have ruby)' -Fore DarkCyan
+    }
+
+    # brew may need gcc to compile things
+    if( !(which gcc) )
+    {
+        Write-Host "Installing gcc" -Fore Cyan
+        apt-get install -y --show-progress gcc
+    }
+    else
+    {
+        Write-Host '(already have gcc)' -Fore DarkCyan
     }
 
     # Can't just run "which brew" to detect brew, because root does not have it in the
