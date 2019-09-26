@@ -9,6 +9,7 @@ fi
 
 
 NOGUI=""
+BRANCH="master"
 while [ ! -z "$1" ]; do
     case "$1" in
         -nogui|-n)
@@ -16,9 +17,16 @@ while [ ! -z "$1" ]; do
             echo "(no GUI requested)"
             NOGUI="-NoGUI"
             ;;
+        -branch|-b)
+            shift
+            BRANCH="$1"
+            shift
+            ;;
     esac
     shift
 done
+
+echo "Selected branch: $BRANCH"
 
 if [ "$NOGUI" == "" ]; then
     if [ ! -f "$(which dconf)" ]; then
@@ -118,7 +126,7 @@ if [ ! -d ./nixSetup ]; then
 	echo ""
 	# sudo back to the calling user so that you won't have to use sudo to do things
 	# like "git pull" in this dir:
-	sudo -u $SUDO_USER git clone https://github.com/jazzdelightsme/nixSetup.git
+	sudo -u $SUDO_USER git clone --branch $BRANCH https://github.com/jazzdelightsme/nixSetup.git
 	cd ./nixSetup
 	pwsh -ExecutionPolicy Bypass -NoProfile ./moreSetup.ps1 $NOGUI
 
