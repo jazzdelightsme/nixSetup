@@ -14,7 +14,11 @@ try
     {
         Write-Host "(relaunching as superuser)" -Fore Yellow
 
-        sudo pwsh -ExecutionPolicy Bypass -NoProfile -Command "$PSScriptRoot\$($MyInvocation.MyCommand)" @PSBoundParameters
+        # I would prefer to forward parameters here using @PSBoundParameters, but that
+        # bombs--because we are actually creating a new process, the serialized switch
+        # becomes "True", and then pwsh complains it can't convert the string into a bool.
+        # *sigh*
+        sudo pwsh -ExecutionPolicy Bypass -NoProfile -Command "$PSScriptRoot\$($MyInvocation.MyCommand)" -NoGUI:`$$NoGUI
 
         return
     }
@@ -31,6 +35,12 @@ try
     if( !(Test-Path Env:\SUDO_USER) )
     {
         throw "unexpected: should have SUDO_USER env var"
+    }
+
+    if( !$NoGUI -and !(which dconf) )
+    {
+        Write-Host "(no dconf, so I'm going to assume -NoGUI)" -Fore DarkCyan
+        $NoGUI = $true
     }
 
     Write-Host "Continuing setup..." -Fore Cyan
